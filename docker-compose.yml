@@ -1,0 +1,8 @@
+version: "3"
+services:
+  next:
+    build: .
+    ports:
+      - "5756:3000"
+    volumes:
+      - ./transcripts:/app/transcripts

@@ -7,8 +7,27 @@ import { useRouter } from "next/router";
 const tokenizer = new WordTokenizer();
 
 const STEP = 10;
+const WORDS = 20;
 
-const commonWords = require("../../etc/words").map(PorterStemmer.stem);
+/*
+const nouns = require("../../etc/nouns");
+const words = require("../../etc/words");
+const wordsWithoutNouns = [
+  ...words.slice(0, 1200),
+  ...words.slice(1200, 2000).filter(n => !nouns.includes(n))
+];
+
+const commonWords = [
+  ...wordsWithoutNouns.map(PorterStemmer.stem),
+  "doesn",
+  "didn",
+  "wasn",
+  "yeah",
+  "wouldn"
+];
+writeFileSync("etc/customwords.json", JSON.stringify(commonWords, null, 2));
+*/
+const commonWords = require("../../etc/customwords");
 
 export default () => {
   const router = useRouter();
@@ -45,7 +64,7 @@ export default () => {
   }, [id]);
 
   useEffect(() => {
-    if (!transcript || !player) {
+    if (!transcript) {
       return;
     }
     const words = {};
@@ -109,9 +128,11 @@ export default () => {
     }
 
     const uncommonWords = Object.keys(words).filter(
-      word => !commonWords.includes(word) && word.length > 4
+      word => !commonWords.includes(word) && word.length > 3
     );
-    const frequentWords = uncommonWords.filter(word => words[word] > 8);
+    const frequentWords = uncommonWords
+      .sort((a, b) => words[b] - words[a])
+      .slice(0, WORDS); // uncommonWords.filter(word => words[word] > 8);
 
     for (const word of frequentWords) {
       const maxOccurrence = Math.max(
@@ -121,7 +142,12 @@ export default () => {
         maxOccurrence
       );
       const title = Object.keys(occurrences[word])[occurrenceIndex];
-      nodes.push({ id: word, group: 2, title, value: words[word] });
+      nodes.push({
+        id: word,
+        group: 2,
+        title,
+        value: Math.pow(words[word], 0.9)
+      });
     }
     for (const node of nodes) {
       const tokenized = tokenizer
@@ -191,7 +217,7 @@ export default () => {
     node
       .append("circle")
       .attr("r", d => d.value || 5)
-      .attr("fill", d => scale(d.group))
+      .attr("fill", d => d.color || scale(d.group))
       .call(
         d3
           .drag()
@@ -233,7 +259,7 @@ export default () => {
 
       node.attr("transform", d => `translate(${d.x},${d.y})`);
     });
-  }, [transcript, player]);
+  }, [transcript]);
 
   return (
     <>
