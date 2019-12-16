@@ -84,6 +84,29 @@ export default () => {
       }
       count++;
     }
+    if (transcript.length) {
+      nodes.push({
+        id: "start",
+        group: 1,
+        title: "Start",
+        value: 10,
+        color: "green"
+      });
+      nodes.push({
+        id: "end",
+        group: 1,
+        title: "End",
+        value: 10,
+        color: "red"
+      });
+      links.push({ source: "start", target: 0, width: 3, color: "black" });
+      links.push({
+        source: count - 1,
+        target: "end",
+        width: 3,
+        color: "black"
+      });
+    }
 
     const uncommonWords = Object.keys(words).filter(
       word => !commonWords.includes(word) && word.length > 4
@@ -132,18 +155,12 @@ export default () => {
                 return 1 / 100;
               }
             }
-            const value = Math.max(
-              link.source.value || 0,
-              link.target.value || 0
-            );
-            return 1 / 10 / value;
+            return (link.source.value || link.target.value) / 200;
           })
       )
       .force(
         "charge",
-        d3.forceManyBody().strength(d => {
-          return d.group === 2 ? -1 : -10;
-        })
+        d3.forceManyBody().strength(d => (d.group === 2 ? -20 : -80))
       )
       .force(
         "center",
